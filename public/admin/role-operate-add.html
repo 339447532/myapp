@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html class="x-admin-sm">
+
+<head>
+    <meta charset="UTF-8">
+    <title>欢迎页面-X-admin2.1</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport"
+        content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8,target-densitydpi=low-dpi" />
+    <link rel="stylesheet" href="../admin/css/font.css">
+    <link rel="stylesheet" type="text/css" href="../admin/lib/layui/css/layui.css" />
+    <link rel="stylesheet" href="../admin/css/xadmin.css">
+    <script src="../admin/lib/layui/layui.js" type="text/javascript" charset="utf-8"></script>
+    <script src="../admin/js/my_ajax.js" type="text/javascript" charset="utf-8"></script>
+    <!-- 让IE8/9支持媒体查询，从而兼容栅格 -->
+    <!--[if lt IE 9]>
+      <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+      <script src="https://cdn.staticfile.org/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+
+<body>
+    <div class="x-body">
+        <form action="" method="post" class="layui-form layui-form-pane">
+            <div class="layui-form-item">
+                <label for="name" class="layui-form-label">
+                    <span class="x-red">*</span>角色名
+                </label>
+                <div class="layui-input-inline">
+                    <input type="text" id="name" name="name" required="" lay-verify="required" autocomplete="off"
+                        class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item layui-form-text">
+                <label class="layui-form-label">
+                    拥有权限
+                </label>
+                <table class="layui-table layui-input-block">
+                    <tbody id="checkebox-operate">
+
+                    </tbody>
+                </table>
+            </div>
+            <div class="layui-form-item layui-form-text">
+                <label for="desc" class="layui-form-label">
+                    描述
+                </label>
+                <div class="layui-input-block">
+                    <textarea placeholder="请输入内容" id="desc" name="desc" class="layui-textarea"></textarea>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <button class="layui-btn" lay-submit="" lay-filter="add">增加</button>
+            </div>
+        </form>
+    </div>
+    <script>
+        layui.use(['form', 'layer'], function () {
+            $ = layui.jquery;
+            var form = layui.form
+                , layer = layui.layer;
+
+            function role_operate_checked() {
+                var result=null;
+                $.ajax({
+                    url: 'http://localhost:3000/role/role_operate_checked',
+                    async: false,
+                    dataType: 'json',
+                    data: { "roleid": GetQueryString("id") },
+                    success: function (data) {
+                         result=data
+            	           
+                    }
+                });
+                return result
+            }
+
+
+
+            $.ajax({
+                url: 'http://localhost:3000/role/role_operate_2',
+                dataType: 'json',
+                data: { "roleid": GetQueryString("id") },
+                success: function (data) {
+                    var obj = eval(data);
+                    console.log(check)
+                    var html = '';
+                    $.each(obj, function (i, value) {
+                        if (value.children) {
+                            html += ' <tr>';
+                            html += ' <td>';
+                            html += ' <input type="checkbox" id="checkbox' + value.id + '" name="like1[write]" lay-skin="primary" lay-filter="father" title="' + value.name + '"> ';
+                            html += ' </td>';
+                            html += ' <td>';
+                            html += ' <div class="layui-input-block">';
+                            if (value.children) {
+                                $.each(value.children, function (n, sub) {
+                                    if (sub.checked == 1) {
+                                        html += '<input class="operate-checkbox" id="checkbox-sub' + sub.id + '" operate-checkbox-menuid="' + value.id + '" name="id[]" lay-skin="primary" type="checkbox" title="' + sub.name + '" value="' + sub.id + '" checked=""> ';
+                                    } else {
+                                        html += '<input class="operate-checkbox" id="checkbox-sub' + sub.id + '" operate-checkbox-menuid="' + value.id + '" name="id[]" lay-skin="primary" type="checkbox" title="' + sub.name + '" value="' + sub.id + '"> ';
+                                    }
+                                });
+                            }
+                            html += ' </div>';
+                            html += ' </td>';
+                            html += '</tr>';
+                        }
+                    });
+                    $('#checkebox-operate').append(html);
+                    var check= role_operate_checked();
+                    
+                    if(check){
+                        $.each(check, function (j, checksub) {
+                        var checkbox_sp=0;
+                        if(checksub.checked==1){
+                            $("#checkbox-sub"+checksub.id).attr("checked", true);
+                            checkbox_sp+=checksub.id
+                        }
+                        if(checkbox_sp>0){
+                            $("#checkbox"+checksub.pid).attr("checked", true);
+                        }
+                       
+                    });
+
+                    }
+                   
+                    form.render();
+                }
+            });
+
+            //监听提交
+            form.on('submit(add)', function (data) {
+                let json = {}
+                let checkbox_id = [];
+                let checkbox_menuid = [];
+                $(".operate-checkbox:checked").each(function () {
+                    let menuid = $(this).attr("operate-checkbox-menuid")
+                    checkbox_menuid[checkbox_menuid.length] = menuid;
+                    checkbox_id[checkbox_id.length] = menuid + ":" + $(this).val()
+
+                });
+                json.menuid = checkbox_menuid;
+                json.id = checkbox_id;
+                json.roleid = GetQueryString("id");
+                console.log(json)
+                if (checkbox_id.length == 0) {
+                    layer.alert("无选中数据")
+                } else {
+                    $.ajax({
+                        url: 'http://localhost:3000/role/set_user_operate',
+                        dataType: 'json',
+                        data: { "data": JSON.stringify(json) },
+                        success: function (data) {
+                            var obj = eval(data);
+                            layer.msg(JSON.stringify(obj.msg));
+
+                        },
+                        error: function (data) {
+                            layer.msg('接口错误!');
+                        },
+                    });
+                }
+                // //发异步，把数据提交给
+                //     layer.alert("增加成功", { icon: 6 }, function () {
+                //     // 获得frame索引
+                //     var index = parent.layer.getFrameIndex(window.name);
+                //     //关闭当前frame
+                //     parent.layer.close(index);
+                // });
+                return false;
+            });
+
+
+            form.on('checkbox(father)', function (data) {
+
+                if (data.elem.checked) {
+                    $(data.elem).parent().siblings('td').find('input').prop("checked", true);
+                    form.render();
+                } else {
+                    $(data.elem).parent().siblings('td').find('input').prop("checked", false);
+                    form.render();
+                }
+            });
+
+
+        });
+    </script>
+
+</body>
+
+</html>

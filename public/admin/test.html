@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>导航菜单</title>
+    <link rel="stylesheet" type="text/css" href="../admin/lib/layui/css/layui.css" />
+    <link rel="stylesheet" href="../admin/css/xadmin.css">
+    <script src="../admin/lib/layui/layui.js" type="text/javascript" charset="utf-8"></script>
+</head>
+
+<body>
+    <div class="x-nav">
+        </span> <a class="layui-btn layui-btn-small" style="line-height:1.6em;margin-top:3px;float:right"
+            href="javascript:location.replace(location.href);" title="刷新"><i class="layui-icon"
+                style="line-height:30px">&#xe669;</i></a>
+    </div>
+    <div class="x-body">
+        <div class="layui-container">
+            <div class="layui-row layui-col-space10">
+                <div class="layui-col-md5">
+                    <form class="layui-form x-center" action="">
+                        <div class="layui-form-pane" style="margin-top: 15px;">
+                            <div class="layui-input-inline">
+                                <input type="text" name="sreach" placeholder="角色名" autocomplete="off"
+                                    class="layui-input" lay-verify="title" style="width: 250px; ">
+                            </div>
+                            <div class="layui-input-inline" style="width: 80px">
+                                <button class="layui-btn" lay-submit="" lay-filter="sreach">
+                                    <i class="layui-icon">&#xe615;</i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                    <div class="demoTable">
+                        <button class="layui-btn layui-btn-danger" data-type="delAll">
+                            <i class="layui-icon">&#xe640;</i>批量删除
+                        </button>
+                        <button class="layui-btn" data-type="add">
+                            <i class="layui-icon">&#xe608;</i>添加
+                        </button>
+                        <span id="count" class="layui-bg-blue x-right" style="line-height: 40px"></span>
+                    </div>
+                    <table id="EditListTable" class="layui-table"
+                        lay-data="{ id:'idTest',url:'http://localhost:3000/role/',method: 'get', page:true ,loading: true,limits:[10,20,30,40,50], limit:10}"
+                        lay-filter="EditListTable">
+                        <thead>
+                            <tr>
+                                <th lay-data="{checkbox:true, fixed: false,align:'center'}"></th>
+                                <th lay-data="{field:'id', width:80,align:'center',templet:'#id'}">序号</th>
+                                <th lay-data="{field:'name', width:180,align:'center'}">名称</th>
+                                <th lay-data="{ align:'center', width:200, toolbar: '#barDemo', fixed: 'right'}">操作</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+                <div class="layui-col-md7">
+                    <form class="layui-form">
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">角色名称</label>
+                            <div class="layui-input-block">
+                                <input class="layui-input" type="text" name="name" placeholder="请输入角色名称" />
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">选择权限</label>
+                            <div class="layui-input-block">
+                                <div id="LAY-auth-tree-index"></div>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <div class="layui-input-block">
+                                <button class="layui-btn" type="submit" lay-submit
+                                    lay-filter="LAY-auth-tree-submit">提交</button>
+                                <button class="layui-btn layui-btn-primary" type="reset">重置</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <script type="text/html" id="barDemo">
+            <a class="layui-btn layui-btn-primary layui-btn-xs" lay-event="add">添加人员</a>
+          <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+          <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+        </script>
+        <script type="text/javascript">
+           layui.config({
+                base: '../admin/lib/'
+            }).extend({
+                authtree: 'authtree/authtree',
+            });
+            layui.use(["form", "table", "layer",'jquery', 'authtree'], function () { //layui 模块引用，根据需要自行修改
+                var $ = layui.jquery;
+                var layer = layui.layer;
+                var table = layui.table; //表格
+                var form = layui.form; //表单
+                var authtree = layui.authtree;
+                //执行渲染
+                table.render({
+                    initSort: {
+                        field: 'sort' //排序字段，对应 cols 设定的各字段名
+                        ,
+                        type: 'asc' //排序方式  asc: 升序、desc: 降序、null: 默认排序
+                    }
+                });
+
+                function ajax(url, data, msg, title) {
+                    $.ajax({
+                        type: "POST",
+                        url: url,
+                        data: data,
+                        error: function (request) {
+                            layer.alert("error");
+                        },
+                        success: function (data) {
+                            layer.msg(msg, {
+                                icon: 1,
+                                time: 1000
+                            });
+                        }
+                    });
+                }
+
+
+                //表格重载
+                function reload(url) {
+                    table.reload('EditListTable', {
+                        url: url,
+                        method: 'post' //如果无需自定义HTTP类型，可不加该参数                        	  
+                        ,
+                        page: true,
+                        response: {
+                            statusName: 'code' //数据状态的字段名称，默认：code
+                            ,
+                            statusCode: 0 //成功的状态码，默认：0
+                            ,
+                            msgName: 'msg' //状态信息的字段名称，默认：msg
+                            ,
+                            countName: 'count' //数据总数的字段名称，默认：count
+                            ,
+                            dataName: 'data' //数据列表的字段名称，默认：data
+                        }
+                    });
+                }
+
+                //自定义验证规则
+                form.verify({
+                    title: function (value) {
+                        if (value == "") {
+                            return '不能为空';
+                        }
+                    }
+
+                });
+                var roleid=""
+                //监听行单击事件（单击事件为：rowDouble）
+                table.on('row(EditListTable)', function (obj) {
+                    var data = obj.data;
+                    roleid=obj.data.id
+
+                    // layer.alert(JSON.stringify(data), {
+                    //     title: '当前行数据：'
+                    // });
+                    $.ajax({
+                    url: 'http://localhost:3000/menu/role_menu',
+                    dataType: 'json',
+                    data: "data=" + JSON.stringify(data),
+                    success: function (data) {
+                        var trees = authtree.listConvert(data.data.list, {
+                            primaryKey: 'id'
+                            , startPid: 0
+                            , parentKey: 'pid'
+                            , nameKey: 'name'
+                            , valueKey: 'id'
+                            , checkedKey: data.data.checkedId
+                        });
+                        // 如果后台返回的不是树结构，请使用 authtree.listConvert 转换
+                        authtree.render('#LAY-auth-tree-index', trees, {
+                            inputname: 'authids[]',
+                            layfilter: 'lay-check-auth',
+                            autowidth: true,
+                        });
+                        // PS:使用 form.on() 会引起了事件冒泡延迟的BUG，需要 setTimeout()，并且无法监听全选/全不选
+                        form.on('checkbox(lay-check-auth)', function (data) {
+                            // 注意这里：需要等待事件冒泡完成，不然获取叶子节点不准确。
+                            setTimeout(function () {
+                                console.log('监听 form 触发事件数据', data);
+                                // 获取选中的叶子节点
+                                var leaf = authtree.getLeaf('#LAY-auth-tree-index');
+                                console.log('leaf', leaf);
+                                // 获取最新选中
+                                var lastChecked = authtree.getLastChecked('#LAY-auth-tree-index');
+                                console.log('lastChecked', lastChecked);
+                                // 获取最新取消
+                                var lastNotChecked = authtree.getLastNotChecked('#LAY-auth-tree-index');
+                                console.log('lastNotChecked', lastNotChecked);
+                            }, 100);
+                        });
+                        // 使用 authtree.on() 不会有冒泡延迟
+                        authtree.on('change(lay-check-auth)', function (data) {
+                            console.log('监听 authtree 触发事件数据', data);
+                            // 获取所有节点
+                            var all = authtree.getAll('#LAY-auth-tree-index');
+                            console.log('all', all);
+                            // 获取所有已选中节点
+                            var checked = authtree.getChecked('#LAY-auth-tree-index');
+                            console.log('checked', checked);
+                            // 获取所有未选中节点
+                            var notchecked = authtree.getNotChecked('#LAY-auth-tree-index');
+                            console.log('notchecked', notchecked);
+                            // 获取选中的叶子节点
+                            var leaf = authtree.getLeaf('#LAY-auth-tree-index');
+                            console.log('leaf', leaf);
+                            // 获取最新选中
+                            var lastChecked = authtree.getLastChecked('#LAY-auth-tree-index');
+                            console.log('lastChecked', lastChecked);
+                            // 获取最新取消
+                            var lastNotChecked = authtree.getLastNotChecked('#LAY-auth-tree-index');
+                            console.log('lastNotChecked', lastNotChecked);
+                        });
+                        authtree.on('deptChange(lay-check-auth)', function (data) {
+                            console.log('监听到显示层数改变', data);
+                        });
+
+                    }
+                });
+                    //标注选中样式
+                    obj.tr.addClass('layui-table-click').siblings().removeClass('layui-table-click');
+                });
+                form.on('submit(LAY-auth-tree-submit)', function (obj) {
+                    var Checked = authtree.getChecked('#LAY-auth-tree-index');
+                    console.log('Checked', Checked);
+                    $.ajax({
+                        url: 'http://localhost:3000/role/set',
+                        dataType: 'json',
+                        data: {"roleid":JSON.stringify(roleid),"data":Checked},
+                        success: function (res) {
+                            layer.alert('提交成功！');
+                        }
+                    });
+                    return false;
+                });
+                //监听提交
+                form.on('submit(sreach)', function (data) {
+					/*  layer.alert(JSON.stringify(data.field), {
+						 title: '最终的提交信息'
+					 }); */
+                    var obj = eval(data.field);
+                    var name = obj.sreach;
+
+                    reload("<%=path%>role?Type=Sreach&name=" + name); //表格重载
+                    return false;
+
+                });
+
+
+
+                //监听工具条
+                table.on('tool(EditListTable)', function (obj) {
+                    var data = obj.data;
+                    if (obj.event === "add") {
+                        layer.open({
+                            type: 2,
+                            maxmin: true, //maxmin - 最大最小化 
+                            title: data.roleName, //标题栏     '编辑'
+                            //  shadeClose: true,  //是否显示滚动条
+                            shade: 0.8,//遮罩透明度
+                            shadeClose: false,//点击遮罩不关闭
+                            area: ['480px', '400px'],
+                            content: ['<%=path%>admin/user/userrole-add.jsp', 'no'], //iframe的url，no代表不显示滚动条
+                            success: function (layero, index) {
+                                var body = layer.getChildFrame('body', index);
+                                //  console.log(body.html()); //得到iframe页的body内容
+                                // body.find('#L_city').val('Hi，我是从父页来的');
+                                body.find('#id').val(data.id);
+                                body.find('#roleName').val(data.name);
+
+                            },
+                            end: function () {
+                                $(".layui-laypage-btn").click();//原地刷新
+                                // location.reload();
+
+                            }
+                        });
+
+
+                    } else if (obj.event === "del") {
+
+                        layer.confirm('真的删除行么', function (index) {
+                            obj.del();
+                            layer.close(index);
+                            //向服务端发送删除指令
+                            $.ajax({
+                                type: 'POST',
+                                url: '<%=path%>/role?Type=Del',
+                                data: { "id": data.id },
+                                success: function (data) {
+                                    layer.msg('已删除!');
+                                    $(".layui-laypage-btn").click();//原地刷新
+                                },
+                                error: function (data) {
+                                    layer.msg('删除失败!');
+                                },
+                            });
+                            $(".layui-laypage-btn").click();//原地刷新
+                        });
+                    } else if (obj.event === 'edit') {
+                        //	layer.alert('编辑行：<br>'+ decodeUnicode(data.name));
+                        layer.open({
+                            type: 2,
+                            maxmin: true, //maxmin - 最大最小化 
+                            title: data.roleName, //标题栏     '编辑'
+                            //  shadeClose: true,  //是否显示滚动条
+                            shade: 0.8,//遮罩透明度
+                            shadeClose: false,//点击遮罩不关闭
+                            area: ['480px', '400px'],
+                            content: ['<%=path%>admin/role/role-edit.jsp', 'no'], //iframe的url，no代表不显示滚动条
+                            success: function (layero, index) {
+                                var body = layer.getChildFrame('body', index);
+                                //  console.log(body.html()); //得到iframe页的body内容
+                                // body.find('#L_city').val('Hi，我是从父页来的');
+                                body.find('#id').val(data.id);
+                                body.find('#roleName').val(data.name);
+
+                            },
+                            end: function () {
+                                $(".layui-laypage-btn").click();//原地刷新
+                                // location.reload();
+
+                            }
+                        });
+                    }
+                });
+
+                //按钮点击事件
+                var $ = layui.$,
+                    active = {
+                        //删除全部
+                        delAll: function () {
+                            layer.confirm('真的删除行么', function (index) {
+                                var checkStatus = table.checkStatus('idTest');
+                                var data = checkStatus.data;
+                                if (data.length > 0) {
+                                    //layer.alert('选中了：' + data.length + ' 个'+ JSON.stringify(data));
+                                    //向服务端发送删除指令
+                                    $.ajax({
+                                        type: "POST",
+                                        url: "<%=path%>/role?Type=delAll",
+                                        data: "data=" + JSON.stringify(data),
+                                        success: function (data) {
+                                            // var curr=  $("#curr").text();
+
+                                            layer.msg("已删除!");
+                                            $(".layui-laypage-btn").click();//原地刷新
+                                        },
+                                        error: function (data) {
+                                            layer.msg('删除失败!');
+                                        },
+
+                                    });
+                                    $(".layui-laypage-btn").click();//原地刷新
+                                }
+                            });
+                        },
+                        //添加
+                        add: function () {
+                            layer.open({
+                                type: 2,
+                                maxmin: true, //maxmin - 最大最小化 
+                                title: '菜单添加', //标题栏     '编辑'
+                                // shadeClose: true,  //是否显示滚动条
+                                shade: 0.8,
+                                area: ['480px', '200px'],
+                                content: ['<%=path%>admin/role/role-add.jsp', 'no'], //iframe的url，no代表不显示滚动条
+                                success: function (layero, index) {
+
+                                },
+
+                                end: function () {
+                                    $(".layui-laypage-btn").click();//原地刷新
+                                    // location.reload();
+                                },
+                            });
+                        }
+                    };
+
+                $('.demoTable .layui-btn').on('click', function () {
+                    var type = $(this).data('type');
+                    active[type] ? active[type].call(this) : '';
+                });
+
+            });
+
+            function decodeUnicode(str) {
+                str = str.replace(/\\/g, "%");
+                return unescape(str);
+            }
+
+
+        </script>
+        <!-- <script>
+        layui.config({
+                base: '../admin/lib/'
+            }).extend({
+                authtree: 'authtree/authtree',
+            });
+            layui.use(['jquery', 'authtree', 'form', 'layer'], function () {
+                var $ = layui.jquery;
+                var authtree = layui.authtree;
+                var form = layui.form;
+                var layer = layui.layer;
+                // 一般来说，权限数据是异步传递过来的
+                $.ajax({
+                    url: 'http://localhost:3000/menu/role_menu',
+                    dataType: 'json',
+                    success: function (data) {
+                        var trees = authtree.listConvert(data.data.list, {
+                            primaryKey: 'id'
+                            , startPid: 0
+                            , parentKey: 'pid'
+                            , nameKey: 'name'
+                            , valueKey: 'id'
+                            , checkedKey: data.data.checkedId
+                        });
+                        // 如果后台返回的不是树结构，请使用 authtree.listConvert 转换
+                        authtree.render('#LAY-auth-tree-index', trees, {
+                            inputname: 'authids[]',
+                            layfilter: 'lay-check-auth',
+                            autowidth: true,
+                        });
+                        // PS:使用 form.on() 会引起了事件冒泡延迟的BUG，需要 setTimeout()，并且无法监听全选/全不选
+                        form.on('checkbox(lay-check-auth)', function (data) {
+                            // 注意这里：需要等待事件冒泡完成，不然获取叶子节点不准确。
+                            setTimeout(function () {
+                                console.log('监听 form 触发事件数据', data);
+                                // 获取选中的叶子节点
+                                var leaf = authtree.getLeaf('#LAY-auth-tree-index');
+                                console.log('leaf', leaf);
+                                // 获取最新选中
+                                var lastChecked = authtree.getLastChecked('#LAY-auth-tree-index');
+                                console.log('lastChecked', lastChecked);
+                                // 获取最新取消
+                                var lastNotChecked = authtree.getLastNotChecked('#LAY-auth-tree-index');
+                                console.log('lastNotChecked', lastNotChecked);
+                            }, 100);
+                        });
+                        // 使用 authtree.on() 不会有冒泡延迟
+                        authtree.on('change(lay-check-auth)', function (data) {
+                            console.log('监听 authtree 触发事件数据', data);
+                            // 获取所有节点
+                            var all = authtree.getAll('#LAY-auth-tree-index');
+                            console.log('all', all);
+                            // 获取所有已选中节点
+                            var checked = authtree.getChecked('#LAY-auth-tree-index');
+                            console.log('checked', checked);
+                            // 获取所有未选中节点
+                            var notchecked = authtree.getNotChecked('#LAY-auth-tree-index');
+                            console.log('notchecked', notchecked);
+                            // 获取选中的叶子节点
+                            var leaf = authtree.getLeaf('#LAY-auth-tree-index');
+                            console.log('leaf', leaf);
+                            // 获取最新选中
+                            var lastChecked = authtree.getLastChecked('#LAY-auth-tree-index');
+                            console.log('lastChecked', lastChecked);
+                            // 获取最新取消
+                            var lastNotChecked = authtree.getLastNotChecked('#LAY-auth-tree-index');
+                            console.log('lastNotChecked', lastNotChecked);
+                        });
+                        authtree.on('deptChange(lay-check-auth)', function (data) {
+                            console.log('监听到显示层数改变', data);
+                        });
+
+                    }
+                });
+
+                form.on('submit(LAY-auth-tree-submit)', function (obj) {
+                    var authids = authtree.getAll('#LAY-auth-tree-index');
+                    console.log('Choosed authids is', authids);
+                    obj.field.authids = authids;
+                    $.ajax({
+                        url: 'http://localhost:3000/menu/role',
+                        dataType: 'json',
+                        data: obj.field,
+                        success: function (res) {
+                            layer.alert('提交成功！');
+                        }
+                    });
+                    return false;
+                });
+
+            });
+        </script> -->
+
+</body>
+
+</html>

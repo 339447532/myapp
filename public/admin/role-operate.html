@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>导航菜单</title>
+    <link rel="stylesheet" type="text/css" href="../admin/lib/layui/css/layui.css" />
+    <link rel="stylesheet" href="../admin/css/xadmin.css">
+    <script type="text/javascript" src="../admin/js/jquery.min.js"></script>
+    <script src="../admin/lib/layui/layui.js" type="text/javascript" charset="utf-8"></script>
+    <script src="../admin/js/my_ajax.js" type="text/javascript" charset="utf-8"></script>
+</head>
+
+<body>
+    <div class="x-body">
+        <div class="layui-row">
+            <div class="layui-col-xs4 layui-col-sm7 layui-col-md8">
+                <div>
+                    <ul id="menu"></ul>
+                </div>
+            </div>
+            <div class="layui-col-xs4 layui-col-sm7 layui-col-md8">
+                <form class="layui-form" action="">
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">选择权限</label>
+                        <div class="layui-input-block" id="operate_checkbox">
+
+
+                            <!-- <input type="checkbox" name="like1[write]" lay-skin="primary" title="写作" checked="">
+                                <input type="checkbox" name="like1[read]" lay-skin="primary" title="阅读">
+                                <input type="checkbox" name="like1[game]" lay-skin="primary" title="游戏" disabled=""> -->
+
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <div class="layui-input-block">
+                            <button class="layui-btn" lay-submit lay-filter="save">提交</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+    </div>
+    <script>
+        var layer;
+        layui.use(["jquery", "tree", "layer"], function () {
+            var $ = layui.jquery;
+            var layer = layui.layer;
+            var tree = layui.tree;
+
+            $.ajax({
+                url: 'http://localhost:3000/menu/role_operate_menu',
+                dataType: 'json',
+                data: {"roleid":GetQueryString("id") },
+                success: function (data) {
+                    var obj = eval(data);
+                    setTree(obj)
+                }
+            });
+            layui.use('form', function () {
+                var form = layui.form;
+
+                //监听提交
+                form.on('submit(save)', function (data) {
+                    let json = {}
+                    let checkbox_id = [];
+                    let checkbox_menuid;
+                    $(".operate-checkbox:checked").each(function () {
+                        checkbox_id[checkbox_id.length] = $(this).attr("operate-checkbox-id")
+                        checkbox_menuid = $(this).attr("operate-checkbox-menuid")
+                    });
+
+                    json.id = checkbox_id;
+                    json.menuid = checkbox_menuid;
+                    json.roleid = GetQueryString("id");
+                    if (checkbox_id.length == 0) {
+                        layer.alert("无选中数据")
+                    } else {
+                    //    console.log(json);
+                    //  alert(JSON.stringify(json));
+                        $.ajax({
+                            url: 'http://localhost:3000/role/set_user_operate',
+                            dataType: 'json',
+                            data: { "data": JSON.stringify(json) },
+                            success: function (data) {
+                                var obj = eval(data);
+								layer.msg(JSON.stringify(obj.msg));
+
+                            },
+                            error: function (data) {
+                                layer.msg('接口错误!');
+                            },
+                        });
+                    }
+
+                    return false;
+                });
+            });
+        });
+
+        function setTree(nodes) {
+            layui.tree({
+                elem: '#menu'
+                , nodes: nodes
+                , click: function (node) {
+                    console.log(node) //node即为当前点击的节点数据
+                   // layer.alert(JSON.stringify(node))
+                    if (JSON.stringify(node.id)) {
+                        operatetree({ "menuid": JSON.stringify(node.id), "roleid": GetQueryString("id") });
+
+                    }
+
+                }
+            });
+        }
+
+        function operatetree(data) {
+            // 一般来说，权限数据是异步传递过来的
+            $.ajax({
+                url: 'http://localhost:3000/role/operate',
+                dataType: 'json',
+                data: data,
+                success: function (data) {
+                    var obj = eval(data);
+                    $("#roleid-operate_checkbox").remove();
+                    var html = '<div id="roleid-operate_checkbox">'
+                    $.each(obj.data, function (i, value) {
+                        if (value.checked == 1) {
+                            html += '<input type="checkbox" class="operate-checkbox" operate-checkbox-menuid="' + value.menuid + '" operate-checkbox-id="' + value.id + '" name="operate[' + value.id + ']" lay-skin="primary" title="' + value.name + '" checked="">'
+                        } else {
+                            html += '<input type="checkbox" class="operate-checkbox" operate-checkbox-menuid="' + value.menuid + '" operate-checkbox-id="' + value.id + '" name="operate[' + value.id + ']" lay-skin="primary" title="' + value.name + '">'
+                        }
+                    });
+                    html += '</div>'
+                    console.log(html)
+                    $("#operate_checkbox").append(html);
+                    layui.use('form', function () {
+                        var form = layui.form;
+                        form.render();
+                    });
+                }
+            });
+
+        }
+
+    </script>
+
+</body>
+
+</html>

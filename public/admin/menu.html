@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>导航菜单</title>
+    <link rel="stylesheet" type="text/css" href="../admin/lib/layui/css/layui.css" />
+    <link rel="stylesheet" href="../admin/css/xadmin.css">
+    <script src="../admin/lib/layui/layui.js" type="text/javascript" charset="utf-8"></script>
+</head>
+<body>
+
+    <!-- 你的HTML代码 -->
+    <div class="x-nav">
+        <span class="layui-breadcrumb">
+            <a href="">首页</a>
+            <a href="">演示</a>
+            <a>
+                <cite>导航元素</cite></a>
+        </span>
+        <a class="layui-btn layui-btn-sm" style="line-height:1.6em;margin-top:3px;float:right"
+            href="javascript:location.replace(location.href);" title="刷新">
+            <i class="layui-icon layui-icon-refresh" style="line-height:30px"></i></a>
+    </div>
+    <!-- 表格 -->
+    <div class="x-body">
+        <div class="layui-row">
+            <div class="layui-inline">
+                <input class="layui-input" id="edt-search" value="" placeholder="输入关键字">
+            </div>
+
+            <button class="layui-btn" id="btn-search" type="button">搜索</button>
+        </div>
+        <!-- 操作列 -->
+        <table id="table1" class="layui-table" lay-filter="table1"></table>
+        <script type="text/html" id="toolbarDemo">
+    <!--<a class="layui-btn layui-btn-primary layui-btn-xs" lay-event="edit">修改</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>-->
+<div class="layui-btn-group">
+  <button class="layui-btn layui-btn-primary layui-btn-xs layui-bg-green" lay-event="btn-expand"><i class="layui-icon layui-icon-down"></i>展开</button>
+  <button class="layui-btn layui-btn-primary layui-btn-xs layui-bg-cyan" lay-event="btn-fold"><i class="layui-icon layui-icon-up"></i>折叠</button>
+  <button class="layui-btn layui-btn-primary layui-btn-xs layui-bg-blue" lay-event="add"><i class="layui-icon layui-icon-add-1"></i> 增加</button>
+  <button class="layui-btn layui-btn-primary layui-btn-xs layui-bg-orange" lay-event="edit"><i class="layui-icon layui-icon-edit"></i> 编辑</button>
+  <button class="layui-btn layui-btn-primary layui-btn-xs layui-bg-red" lay-event="del"><i class="layui-icon layui-icon-delete"></i> 删除</button>
+  
+</div>
+<span class="x-right" id="count" style="line-height:40px"></span>
+
+</script>
+        <script type="text/html" id="auth-state">
+    <a class="layui-btn layui-btn-primary layui-btn-xs" lay-event="edit">修改</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+        <div id="page"></div>
+    </div>
+    <!-- 表格end -->
+    <script>
+        layui.config({
+            base: '../admin/lib/'
+        }).extend({
+            treetable: 'treetable-lay/treetable'
+        }).use(['layer', 'table', 'treetable', 'form', 'jquery', 'laypage'], function () {
+            var $ = layui.jquery;
+            var table = layui.table;
+            var form = layui.form;
+            // var element = layui.element;
+            var layer = layui.layer;
+            var treetable = layui.treetable;
+            var laypage = layui.laypage;
+
+            // 渲染表格
+            var renderTable = function () {
+                layer.load(2);
+                treetable.render({
+                    treeColIndex: 1,
+                    treeSpid: 0,
+                    treeIdName: 'id',
+                    treePidName: 'pid',
+                    treeDefaultClose: true,
+                    treeLinkage: false,
+                    elem: '#table1',
+                    //url: '__STATIC__/json/menus.json',
+                    url: 'http://localhost:3000/menu/list',
+                    toolbar: '#toolbarDemo',
+                    page: true,
+                    cols: [[
+                        { type: 'checkbox' },
+                        { field: 'name', minWidth: 200, title: '名称' },
+                        { field: 'sort', width: 80, align: 'center', title: '排序号' },
+                        {
+                            field: 'display', width: 80, align: 'center', templet: function (d) {
+                                if (d.display == '启用') {
+                                    return '<span class="layui-badge layui-bg-blue">启用</span>';
+                                } else {
+                                    return '<span class="layui-badge-rim">禁用</span>';
+                                }
+                            }, title: '显隐'
+                        },
+                        { templet: '#auth-state', width: 120, align: 'center', title: '操作' }
+                    ]],
+                    done: function () {
+                        layer.closeAll('loading');
+
+                    }
+                });
+            };
+
+             renderTable();
+   
+            // laypage.render({
+            //     elem: 'page'
+            //     , count: 70 //数据总数，从服务端得到
+            //     ,layout: ['count', 'prev', 'page', 'next', 'limit', 'refresh', 'skip']
+            //     , jump: function (obj, first) {
+            //         //obj包含了当前分页的所有参数，比如：
+            //         console.log(obj.curr); //得到当前页，以便向服务端请求对应页的数据。
+            //         console.log(obj.limit); //得到每页显示的条数
+
+            //         //首次不执行
+            //         if (!first) {
+            //             //do something
+                      
+            //         }
+            //     }
+            // });
+
+            //全部展开
+            $(document).on("click", "#btn-expand", function () {
+                treetable.expandAll('#table1');
+            });
+
+            //全部折叠
+            $(document).on("click", "#btn-fold", function () {
+                treetable.foldAll('#table1');
+            });
+
+            //刷新表格
+            $(document).on("click", "#btn-refresh", function () {
+                renderTable();
+            });
+            //搜索
+            $(document).on("click", "#btn-search", function () {
+                var keyword = $('#edt-search').val();
+                var searchCount = 0;
+                $('#table1').next('.treeTable').find('.layui-table-body tbody tr td').each(function () {
+                    $(this).css('background-color', 'transparent');
+                    var text = $(this).text();
+                    if (keyword != '' && text.indexOf(keyword) >= 0) {
+                        $(this).css('background-color', 'rgba(250,230,160,0.5)');
+                        if (searchCount == 0) {
+                            treetable.expandAll('#table1');
+                            $('html,body').stop(true);
+                            $('html,body').animate({ scrollTop: $(this).offset().top - 150 }, 500);
+                        }
+                        searchCount++;
+                    }
+                });
+                if (keyword == '') {
+                    layer.msg("请输入搜索内容", { icon: 5 });
+                } else if (searchCount == 0) {
+                    layer.msg("没有匹配结果", { icon: 5 });
+                }
+            });
+
+            //头工具栏事件
+            table.on('toolbar(table1)', function (obj) {
+                var checkStatus = table.checkStatus(obj.config.id);
+
+                switch (obj.event) {
+                    case 'add':
+                        layer.ready(function () {
+                            layer.open({
+                                type: 2,
+                                title: '增加',
+                                maxmin: true,
+                                area: ['80%', '70%'],
+                                content: '',
+                                cancel: function () { //刷新网页
+                                    //重新加载表格数据  
+                                    self.location = '';
+                                }
+                            });
+                        });
+                        //layer.msg('增加' + obj.config.id);
+                        break;
+                    case 'edit':
+                        var data = checkStatus.data;
+                        var dataall = '';
+                        //data = JSON.stringify(data);
+                        //循环把所有要删除的ID整成12,13,545
+                        for (var i = 0; i < data.length; i++) {
+                            dataall += data[i].id + ",";
+                        }
+                        dataall = dataall.substring(0, dataall.length - 1)
+
+                        //         console.log(dataall)
+                        layer.alert(dataall);
+                        break;
+                    case 'del':
+                        var data = checkStatus.data;
+                        var dataall = '';
+                        //data = JSON.stringify(data);
+                        //循环把所有要删除的ID整成12,13,545
+                        for (var i = 0; i < data.length; i++) {
+                            dataall += data[i].id + ",";
+                        }
+                        dataall = dataall.substring(0, dataall.length - 1)
+
+                        //         console.log(dataall)
+                        layer.alert(dataall);
+                        break;
+
+                    case 'btn-expand':
+                        treetable.expandAll('#table1');
+                        break;
+                    case 'btn-fold':
+                        treetable.foldAll('#table1');
+                        break;
+                };
+            });
+
+            //监听工具条
+            table.on('tool(table1)', function (obj) {
+                var data = obj.data;
+                console.log(data)
+                var layEvent = obj.event;
+
+                if (layEvent === 'del') {
+                    layer.msg('删除' + data.id);
+
+                } else if (layEvent === 'edit') {
+                    layer.msg('修改' + data.id);
+                    layer.open({
+                        type: 2,
+                        maxmin: true, //maxmin - 最大最小化 
+                        title: data.name, //标题栏     '编辑'
+                        //  shadeClose: true,  //是否显示滚动条
+                        shade: 0.8,//遮罩透明度
+                        shadeClose: false,//点击遮罩不关闭
+                        area: ['700px', '450px'],
+                        content: ['menu-edit.html?id=' + data.id, 'no'], //iframe的url，no代表不显示滚动条
+                        success: function (layero, index) {
+                            var body = layer.getChildFrame('body', index);
+                            //  console.log(body.html()); //得到iframe页的body内容
+                            // body.find('#L_city').val('Hi，我是从父页来的');
+                        },
+                        end: function () {
+                            renderTable();
+
+
+                        }
+                    });
+                }
+            });
+
+
+        });
+    </script>
+    </body>
+
+</html>

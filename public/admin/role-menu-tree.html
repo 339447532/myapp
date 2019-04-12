@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>导航菜单</title>
+    <link rel="stylesheet" type="text/css" href="../admin/lib/layui/css/layui.css" />
+    <link rel="stylesheet" href="../admin/css/xadmin.css">
+    <script src="../admin/lib/layui/layui.js" type="text/javascript" charset="utf-8"></script>
+    <script src="../admin/js/my_ajax.js" type="text/javascript" charset="utf-8"></script>
+</head>
+
+<body>
+    <form class="layui-form">
+        <div class="layui-form-item">
+            <label class="layui-form-label">选择权限</label>
+            <div class="layui-input-block">
+                <div id="LAY-auth-tree-index"></div>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" type="submit" lay-submit lay-filter="LAY-auth-tree-submit">提交</button>
+                <button class="layui-btn layui-btn-primary" type="reset">重置</button>
+            </div>
+        </div>
+    </form>
+    <script>
+     layui.config({
+                base: '../admin/lib/'
+            }).extend({
+                authtree: 'authtree/authtree',
+            });
+            layui.use(['jquery', 'authtree', 'form', 'layer'], function () {
+                var $ = layui.jquery;
+                var authtree = layui.authtree;
+                var form = layui.form;
+                var layer = layui.layer;
+                // 一般来说，权限数据是异步传递过来的
+                $.ajax({
+                    url: 'http://localhost:3000/menu/role_menu',
+                    dataType: 'json',
+                    data: "id=" + GetQueryString("id"),
+                    success: function (data) {
+                        var trees = authtree.listConvert(data.data.list, {
+                            primaryKey: 'id'
+                            , startPid: 0
+                            , parentKey: 'pid'
+                            , nameKey: 'name'
+                            , valueKey: 'id'
+                            , checkedKey: data.data.checkedId
+                        });
+                        // 如果后台返回的不是树结构，请使用 authtree.listConvert 转换
+                        authtree.render('#LAY-auth-tree-index', trees, {
+                            inputname: 'authids[]',
+                            layfilter: 'lay-check-auth',
+                            autowidth: true,
+                        });
+                        // PS:使用 form.on() 会引起了事件冒泡延迟的BUG，需要 setTimeout()，并且无法监听全选/全不选
+                        form.on('checkbox(lay-check-auth)', function (data) {
+                            // 注意这里：需要等待事件冒泡完成，不然获取叶子节点不准确。
+                            setTimeout(function () {
+                                console.log('监听 form 触发事件数据', data);
+                                // 获取选中的叶子节点
+                                var leaf = authtree.getLeaf('#LAY-auth-tree-index');
+                                console.log('leaf', leaf);
+                                // 获取最新选中
+                                var lastChecked = authtree.getLastChecked('#LAY-auth-tree-index');
+                                console.log('lastChecked', lastChecked);
+                                // 获取最新取消
+                                var lastNotChecked = authtree.getLastNotChecked('#LAY-auth-tree-index');
+                                console.log('lastNotChecked', lastNotChecked);
+                            }, 100);
+                        });
+                        // 使用 authtree.on() 不会有冒泡延迟
+                        authtree.on('change(lay-check-auth)', function (data) {
+                            console.log('监听 authtree 触发事件数据', data);
+                            // 获取所有节点
+                            var all = authtree.getAll('#LAY-auth-tree-index');
+                            console.log('all', all);
+                            // 获取所有已选中节点
+                            var checked = authtree.getChecked('#LAY-auth-tree-index');
+                            console.log('checked', checked);
+                            // 获取所有未选中节点
+                            var notchecked = authtree.getNotChecked('#LAY-auth-tree-index');
+                            console.log('notchecked', notchecked);
+                            // 获取选中的叶子节点
+                            var leaf = authtree.getLeaf('#LAY-auth-tree-index');
+                            console.log('leaf', leaf);
+                            // 获取最新选中
+                            var lastChecked = authtree.getLastChecked('#LAY-auth-tree-index');
+                            console.log('lastChecked', lastChecked);
+                            // 获取最新取消
+                            var lastNotChecked = authtree.getLastNotChecked('#LAY-auth-tree-index');
+                            console.log('lastNotChecked', lastNotChecked);
+                        });
+                        authtree.on('deptChange(lay-check-auth)', function (data) {
+                            console.log('监听到显示层数改变', data);
+                        });
+
+                    }
+                });
+
+                form.on('submit(LAY-auth-tree-submit)', function (obj) {
+                    var Checked = authtree.getChecked('#LAY-auth-tree-index');
+                    console.log('Checked', Checked);
+                    $.ajax({
+                        url: 'http://localhost:3000/role/set',
+                        dataType: 'json',
+                        data: {"roleid":GetQueryString("id"),"data":Checked},
+                        success: function (res) {  
+                            var obj = eval(res);                         
+                            var index = parent.layer.getFrameIndex(window.name); //先得到当前iframe层的索引
+                            parent.layer.close(index); //再执行关闭
+                            parent.layer.msg(obj.msg,{shade: 0.1});
+                        }
+                    });
+                    return false;
+                });
+
+            });
+
+
+    
+    </script>
+</body>
+
+</html>

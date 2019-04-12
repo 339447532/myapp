@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<title>导航菜单</title>
+	<link rel="stylesheet" type="text/css" href="../admin/lib/layui/css/layui.css" />
+	<link rel="stylesheet" href="../admin/css/xadmin.css">
+	 <script type="text/javascript" src="../admin/js/jquery.min.js"></script>
+	<script src="../admin/lib/layui/layui.js" type="text/javascript" charset="utf-8"></script>
+	<script src="../admin/js/my_ajax.js" type="text/javascript" charset="utf-8"></script>
+</head>
+
+<body>
+	<div class="x-body">
+		<form class="layui-form" id="from">
+			<div class=" layui-form-item">
+				<div class="layui-form-item">
+					<div class="layui-inline">
+						<label for="menuName" class="layui-form-label">选择人员</label>
+						<div class="layui-inline">
+							<select name="category" id="category" lay-filter="required" lay-search="">
+							</select>
+						</div>
+						<div class="layui-inline">
+							<button class="layui-btn" key="set-mine" lay-filter="save" lay-submit="">增加</button>
+						</div>
+					</div>
+				</div>
+		</form>
+		<table id="EditListTable" class="layui-table" lay-filter="EditListTable">
+		</table>
+	</div>
+	<script>
+		$(function () {
+			$.ajax({
+				type: "get",
+				url: "http://localhost:3000/users/list",
+				async: false,
+				data: {},
+				dataType: "json",
+				success: function (data) {
+					var obj =   eval(data.data);
+					var menu = ' <option value=""></option>';
+					$.each(obj, function (i, value) {
+						let html = '<option value="' + value.id + '">' + value.realname + '</option>';
+						menu += html;
+					});
+					//	console.log(menu)
+					$('#category').append(menu);
+
+				},
+				error: function (data) {
+					layer.alert("接口错误", {
+						title: '提示'
+					});
+
+				}
+			});
+		});
+
+	</script>
+	<script>
+
+		layui.use(["form", "jquery", "table", "layer"], function () {//layui 模块引用，根据需要自行修改
+			var layer = layui.layer;
+			var form = layui.form;
+			var table = layui.table; //表格
+			var $ = layui.jquery;
+
+			table.render({
+				elem: '#EditListTable'
+				, url: 'http://localhost:3000/role/role_user?roleid=' + GetQueryString("id")
+				, cellMinWidth: 80 //全局定义常规单元格的最小宽度，layui 2.2.1 新增
+				, cols: [[
+					{ checkbox: true, fixed: false, align: 'center' }
+					, { field: 'id', width: 80, title: 'ID' }
+					, { field: 'realname', width: 120, title: '用户名', sort: true }
+					, { align: 'center', toolbar: '#barDemo', title: '操作', fixed: 'right' }
+				]]
+				, page: true
+			});
+			//执行渲染
+			table.render({
+				initSort: {
+					field: 'id' //排序字段，对应 cols 设定的各字段名
+				 ,type: 'asc' //排序方式  asc: 升序、desc: 降序、null: 默认排序
+				}
+			});
+			//表格重载
+			function reload(url) {
+				table.reload('EditListTable', {
+					url: url
+					, method: 'get' //如果无需自定义HTTP类型，可不加该参数                        	  
+					, page: true
+					, response: {
+					    statusName: 'code' //数据状态的字段名称，默认：code
+						, statusCode: 0 //成功的状态码，默认：0
+						, msgName: 'msg' //状态信息的字段名称，默认：msg
+						, countName: 'count' //数据总数的字段名称，默认：count
+						, dataName: 'data' //数据列表的字段名称，默认：data
+					}
+				});
+			}
+
+			//监听工具条
+			table.on('tool(EditListTable)', function (obj) {
+				var data = obj.data;
+				if (obj.event === "del") {
+
+					layer.confirm('真的删除行么', function (index) {
+						obj.del();
+						layer.close(index);
+						//向服务端发送删除指令
+						$.ajax({
+							type: 'get',
+							url: 'http://localhost:3000/role/roleuser_del',
+							dataType: 'json',
+							data: { "userid": data.id, "roleid": GetQueryString("id") },
+							success: function (data) {
+								var obj = eval(data);
+								layer.msg(obj.msg,{shade: 0.1});
+								reload('http://localhost:3000/role/role_user?roleid=' + GetQueryString("id"));
+							
+							},
+							error: function (data) {
+								layer.msg('删除失败!');
+							},
+						});
+
+					});
+				}
+			});
+
+			//监听提交
+			form.on('submit(save)', function (data) {
+				var userid = $('#category').val()
+				var roleid = GetQueryString("id")
+				from = decodeURIComponent(from, true);
+				console.log(from)
+				$.ajax({
+					type: "get",
+					url: 'http://localhost:3000/role/user_add',
+					dataType: 'json',
+					data: { "userid": userid, "roleid": roleid },
+					error: function (request) {
+						layer.msg("接口error");
+					},
+					success: function (data) {
+						var obj = eval(data);
+						if(obj.code==-1){
+							layer.msg(obj.msg,{shade: 0.1});
+						}else{
+							layer.msg(obj.msg,{shade: 0.1});
+							reload('http://localhost:3000/role/role_user?roleid=' + GetQueryString("id"));
+							
+						}
+					}
+				});
+				return false;
+			});
+		});
+	</script>
+	<script type="text/html" id="barDemo">
+  <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+</body>
+
+</html>
