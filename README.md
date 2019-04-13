@@ -16,7 +16,7 @@ session存入redis
 #### 使用说明
 支持同步方式获取数据
 导入require('../db/sql.async.db');
-https://github.com/339447532/myapp/edit/master/images/1.png
+![Image text](https://github.com/339447532/myapp/edit/master/images/1.png)
 
 
 异步获取必须嵌套代码可读性差
