@@ -11,9 +11,17 @@ session存入redis
 #### 安装教程
 
 1. 安装redis
-2. 导入doc/下面的sql
+2. 导入/public/doc/下面的sql
 
 #### 使用说明
+支持同步方式获取数据
+导入require('../db/sql.async.db');
+
+
+
+异步获取必须嵌套代码可读性差
+导入require('../db/sql.db');
+
 
 
 #### 参与贡献
@@ -24,4 +32,3 @@ session存入redis
 
 #### 版权
 作者:占啟 339447532@qq.com,禁止996工作制企业使用本源码
-

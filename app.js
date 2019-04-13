@@ -46,7 +46,6 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-
 // //登录拦截器
 app.all('/*', function(req, res, next){
   res.setHeader("Content-Type", "text/html")

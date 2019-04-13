@@ -27,8 +27,6 @@ router.get('/list', function (req, res, next) {
     let userid = result.id;//用户id
     let sql_menu = "SELECT * from menus ";
     db.query(sql_menu, [userid], function (result, fields) {
-      // console.log('查询结果：');
-      //  console.log(JSON.stringify(rd.toTree(result)));
       res.send(rd.render(result))
     });
   });

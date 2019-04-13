@@ -20,5 +20,15 @@ module.exports = {
       database : 'jx',//数据库名
       user : 'root',//数据库用户名
       password : 'zq8439899'//数据库密码
+    },
+    Promise:{
+            connectionLimit :10,
+            host: '192.168.99.64',
+            port : 3306,//端口号
+            user:  'root',//数据库用户名
+            password: 'zq8439899',//数据库密码
+            database: 'jx',//数据库名
+            multipleStatements : true  //是否允许执行多条sql语句
     }
+
 }
