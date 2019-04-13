@@ -19,9 +19,10 @@ session存入redis
 ![Image text](https://github.com/339447532/myapp/blob/master/images/20190413131351.png)
 
 
+
 异步获取必须嵌套代码可读性差
 导入require('../db/sql.db');
-
+![Image text](https://github.com/339447532/myapp/blob/master/images/20190413132111.png)
 
 
 #### 参与贡献
